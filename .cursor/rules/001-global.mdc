@@ -12,6 +12,39 @@ alwaysApply: true
 - **Frontend:** **React Native** (TypeScript). Auth and data via Supabase JS client; app talks to our FastAPI for server-only actions.
 - **Principles:** typed boundaries, least-privilege auth, RLS-first DB design, small PRs, clear tests, consistent error shapes.
 
+## Project Structure
+
+```
+BeAlive/
+├── .cursor/
+│   └── rules/                    # Cursor AI rules and guidelines
+├── .vscode/                      # VS Code workspace settings
+├── backend/                      # FastAPI + Supabase backend
+│   ├── app/
+│   │   ├── api/                  # API routers and endpoints
+│   │   │   ├── __init__.py
+│   │   │   └── endpoints/       # Individual endpoint modules
+│   │   ├── core/                 # Configuration, logging, security
+│   │   ├── models/               # Pydantic schemas
+│   │   │   └── user.py
+│   │   ├── services/             # Business logic and Supabase client
+│   │   └── main.py               # FastAPI application entry point
+│   ├── tests/                    # Backend tests
+│   ├── pyproject.toml            # Python project configuration
+│   ├── requirements.txt          # Python dependencies
+│   └── .env.example             # Environment variables template
+├── frontend/                     # React Native frontend
+│   ├── _layout.tsx              # App layout component
+│   ├── index.tsx                # Main app entry point
+│   ├── app.json                 # Expo/React Native configuration
+│   ├── package.json             # Node.js dependencies
+│   ├── package-lock.json        # Dependency lock file
+│   ├── tsconfig.json            # TypeScript configuration
+│   └── eslint.config.js         # ESLint configuration
+├── README.md                    # Project documentation
+└── .gitignore                   # Git ignore rules
+```
+
 ---
 
 ## Global Expectations (applies to all changes)
