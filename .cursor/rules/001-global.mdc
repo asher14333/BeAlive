@@ -1,0 +1,103 @@
+---
+description: "BeAlive project rules — FastAPI + Supabase backend, React Native frontend"
+# Apply to everything in repo, but include per-area sections below.
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
+# BeAlive — Project Overview
+
+- **Backend:** FastAPI service talking to **Supabase** (Auth, Postgres, Storage, Functions/RPC).
+- **Frontend:** **React Native** (TypeScript). Auth and data via Supabase JS client; app talks to our FastAPI for server-only actions.
+- **Principles:** typed boundaries, least-privilege auth, RLS-first DB design, small PRs, clear tests, consistent error shapes.
+
+## Project Structure
+
+```
+BeAlive/
+├── .cursor/
+│   └── rules/                    # Cursor AI rules and guidelines
+├── .vscode/                      # VS Code workspace settings
+├── backend/                      # FastAPI + Supabase backend
+│   ├── app/
+│   │   ├── api/                  # API routers and endpoints
+│   │   │   ├── __init__.py
+│   │   │   └── endpoints/       # Individual endpoint modules
+│   │   ├── core/                 # Configuration, logging, security
+│   │   ├── models/               # Pydantic schemas
+│   │   │   └── user.py
+│   │   ├── services/             # Business logic and Supabase client
+│   │   └── main.py               # FastAPI application entry point
+│   ├── tests/                    # Backend tests
+│   ├── pyproject.toml            # Python project configuration
+│   ├── requirements.txt          # Python dependencies
+│   └── .env.example             # Environment variables template
+├── frontend/                     # React Native frontend
+│   ├── _layout.tsx              # App layout component
+│   ├── index.tsx                # Main app entry point
+│   ├── app.json                 # Expo/React Native configuration
+│   ├── package.json             # Node.js dependencies
+│   ├── package-lock.json        # Dependency lock file
+│   ├── tsconfig.json            # TypeScript configuration
+│   └── eslint.config.js         # ESLint configuration
+├── README.md                    # Project documentation
+└── .gitignore                   # Git ignore rules
+```
+
+---
+
+## Global Expectations (applies to all changes)
+
+- Prefer incremental edits; preserve existing patterns where consistent.
+- Always include **why** in code comments for non-obvious logic.
+- Add/adjust **tests** when changing behavior.
+- Keep public API shapes documented in code (JSDoc/Docstrings) and co-located READMEs where useful.
+- When uncertain, propose a short plan before large refactors.
+
+### Commit/PR hygiene
+
+- Atomic commits with imperative subjects.
+- PRs include: context, screenshots/logs for UX/API changes, and test notes.
+
+---
+
+## Security & Auth (shared)
+
+- **Never** expose the **service role key** in mobile code or anywhere client-visible.
+- Back end validates **Supabase JWT** via JWKS (RS256). Accept `Authorization: Bearer <access_token>`.
+- Enforce **RLS** in Supabase; prefer RPCs that enforce policy for complex reads/writes.
+- Inputs validated at boundaries (FastAPI: Pydantic; RN: zod or TypeScript types).
+
+---
+
+## Backend (FastAPI) Rules
+
+**Paths in scope:** `backend/app/**/*`, `backend/tests/**/*`
+
+### Architecture
+
+- Routers in `app/api/…`, business logic in `app/services/…`, cross-cutting in `app/core/…`, schemas in `app/models/…`.
+- Do **not** query Supabase directly from routers; call a service function.
+- Keep responses typed with Pydantic models; never return raw DB rows.
+
+### Supabase integration
+
+- Use **Anon** client for user-scoped ops when passing a user token downstream; use **Service Role** client **only** for admin/server tasks that RLS cannot handle.
+- Prefer **RPC** (Postgres functions) for multi-step or policy-heavy operations.
+- If adding a new RPC, add a thin service wrapper that:
+  1. validates inputs,
+  2. calls RPC,
+  3. maps DB errors → structured API errors.
+
+### Auth & request context
+
+- Extract user from JWT once (dependency) and pass `user.id` to services.
+- Never trust client-sent user IDs; derive from token.
+
+### Errors
+
+- Standard error shape:
+  ```json
+  { "error": { "code": "string", "message": "human readable", "details": {...} } }
+  ```
